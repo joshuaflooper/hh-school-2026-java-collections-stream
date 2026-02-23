@@ -21,70 +21,82 @@ P.P.S Здесь ваши правки необходимо прокоммент
  */
 public class Task9 {
 
-  private long count;
-
   // Костыль, эластик всегда выдает в топе "фальшивую персону".
   // Конвертируем начиная со второй
   public List<String> getNames(List<Person> persons) {
-    if (persons.size() == 0) {
-      return Collections.emptyList();
-    }
-    persons.remove(0);
-    return persons.stream().map(Person::firstName).collect(Collectors.toList());
+    return persons.stream()
+            .map(Person::firstName)
+            .skip(1)
+            .collect(Collectors.toList());
   }
+  // 1) Так как коллекции передаются по ссылке, то удаление
+  // из persons приведёт к удалению везде, а не только внутри метода.
+  // Не в курсе внутреннего устройства эластика, но вдруг эта первая
+  // персона ещё пригодится. К тому же, стримах есть метод .slip(n) —
+  // использую его.
+  // 2) Выкидываем проверку на пустоту списка персон. Если он будет пустым,
+  // то поток тоже будет пустым — map и skip ничего не сделают, получится пустой список.
+  // (Я проверил).
 
   // Зачем-то нужны различные имена этих же персон (без учета фальшивой разумеется)
   public Set<String> getDifferentNames(List<Person> persons) {
-    return getNames(persons).stream().distinct().collect(Collectors.toSet());
+    return new HashSet<>(getNames(persons));
   }
+  // Ну тут масло масляное. Во-первых, distinct не нужен, так как при
+  // преобразовании в множество все повторения по-любому удалятся.
+  // Во-вторых, тогда уж и стрим лишний, потмоу что можно
+  // преобразовать в множество просто через конструктор.
 
   // Тут фронтовая логика, делаем за них работу - склеиваем ФИО
   public String convertPersonToString(Person person) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     if (person.secondName() != null) {
-      result += person.secondName();
+      result.append(person.secondName());
     }
 
     if (person.firstName() != null) {
-      result += " " + person.firstName();
+      result.append(String.format(" %s", person.firstName()));
     }
 
     if (person.secondName() != null) {
-      result += " " + person.secondName();
+      result.append(String.format(" %s", person.secondName()));
     }
-    return result;
+    return result.toString();
   }
+  // Честно говоря, не знаю, касательно проверок на null. Мне кажется, всё оправданно.
+  // Но вот я слышал, что так строки лучше не конкатенировать, а использовать StringBuilder и форматирование.
 
   // словарь id персоны -> ее имя
   public Map<Integer, String> getPersonNames(Collection<Person> persons) {
-    Map<Integer, String> map = new HashMap<>(1);
-    for (Person person : persons) {
-      if (!map.containsKey(person.id())) {
-        map.put(person.id(), convertPersonToString(person));
-      }
-    }
-    return map;
+    return persons.stream()
+            .collect(Collectors.toMap(Person::id, this::convertPersonToString));
   }
+  // А, эм... Мне кажется, лучше использовать стрим. Получится в одну строчку.
+  // Касательно того, что есть. Во-первых, не понятно, зачем начальны размер 1.
+  // А если коллекция персон пустая? Во-вторых, не понятно, зачем нужна проверка
+  // на содержание ключа. Как будто лучше просто перезаписывать, учитывая,
+  // что связка id + имя уникальна. Короче, много строчек кода -> одна строчка (ну почти).
 
   // есть ли совпадающие в двух коллекциях персоны?
   public boolean hasSamePersons(Collection<Person> persons1, Collection<Person> persons2) {
-    boolean has = false;
-    for (Person person1 : persons1) {
-      for (Person person2 : persons2) {
-        if (person1.equals(person2)) {
-          has = true;
-        }
-      }
-    }
-    return has;
+    for (Person person1 : persons1)
+      for (Person person2 : persons2)
+        if (person1.equals(person2))
+          return true;
+    return false;
   }
+  // Во-первых, оптимальнее будет сразу вернуть true, когда найдутся одинаковые персоны.
+  // Во-вторых, можно использовать стримы (filter persons1 по persons2::contains и потом проверяем,
+  // не пуст ли получившийся стрим, — такой вот математический подход). Но это точно будет работать всегда за O(m*n),
+  // так как будет происходить полный перебор для пересечения. Плюс расход памяти будет больше.
+  // А тут метод завершится при нахождении первого совпадения. То есть O(m*n) только в худшем случае.
 
   // Посчитать число четных чисел
   public long countEven(Stream<Integer> numbers) {
-    count = 0;
-    numbers.filter(num -> num % 2 == 0).forEach(num -> count++);
-    return count;
+    return numbers.filter(num -> num % 2 == 0).count();
   }
+  // А зачем переменной count быть глобальной?... Зачем вообще она нужна и зачем подсчёт через forEach?
+  // У стримов же есть count!
 
   // Загадка - объясните почему assert тут всегда верен
   // Пояснение в чем соль - мы перетасовали числа, обернули в HashSet, а toString() у него вернул их в сортированном порядке
@@ -96,3 +108,6 @@ public class Task9 {
     assert snapshot.toString().equals(set.toString());
   }
 }
+  // Я, честно говоря, не уверен. Но мне кажется, что хэш у чисел — это само значение числа.
+  // Получается, что хэш (номер) бакета равен значению числа, а так как бакеты хранятся по порядку,
+  // то и сами числа оказываются расставленными по порядку.
