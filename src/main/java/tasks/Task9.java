@@ -54,7 +54,7 @@ public class Task9 {
   // словарь id персоны -> ее имя
   public Map<Integer, String> getPersonNames(Collection<Person> persons) {
     return persons.stream()
-            .collect(Collectors.toMap(Person::id, this::convertPersonToString));
+            .collect(Collectors.toMap(Person::id, this::convertPersonToString, (existing, replacement) -> existing));
   }
   // А, эм... Мне кажется, лучше использовать стрим. Получится в одну строчку.
   // Касательно того, что есть. Во-первых, не понятно, зачем начальны размер 1.
