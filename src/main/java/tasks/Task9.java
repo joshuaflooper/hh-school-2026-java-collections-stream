@@ -1,14 +1,8 @@
 package tasks;
 
 import common.Person;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -49,22 +43,13 @@ public class Task9 {
 
   // Тут фронтовая логика, делаем за них работу - склеиваем ФИО
   public String convertPersonToString(Person person) {
-    StringBuilder result = new StringBuilder();
-    if (person.secondName() != null) {
-      result.append(person.secondName());
-    }
-
-    if (person.firstName() != null) {
-      result.append(String.format(" %s", person.firstName()));
-    }
-
-    if (person.secondName() != null) {
-      result.append(String.format(" %s", person.secondName()));
-    }
-    return result.toString();
+    return Stream.of(person.firstName(), person.middleName(), person.secondName())
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(" "));
   }
-  // Честно говоря, не знаю, касательно проверок на null. Мне кажется, всё оправданно.
-  // Но вот я слышал, что так строки лучше не конкатенировать, а использовать StringBuilder и форматирование.
+  // Сделал стрим из соответствующих полей персоны.
+  // Отфильтровал по функции nonNull, применил коллектор joining,
+  // позволяющий склеить строки с разделителем.
 
   // словарь id персоны -> ее имя
   public Map<Integer, String> getPersonNames(Collection<Person> persons) {
