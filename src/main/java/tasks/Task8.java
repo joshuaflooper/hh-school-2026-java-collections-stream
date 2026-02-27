@@ -22,16 +22,10 @@ public class Task8 {
   }
 
   public Set<PersonWithResumes> enrichPersonsWithResumes(Collection<Person> persons) {
-    Set<Resume> resumes = personService.findResumes(persons.stream()
-            .map(Person::id)
-            .collect(Collectors.toSet()));
-    Map<Integer, Set<Resume>> personResumesMap = new HashMap<>();
-    resumes.forEach(r -> {
-      if (personResumesMap.containsKey(r.personId()))
-        personResumesMap.get(r.personId()).add(r);
-      else
-        personResumesMap.put(r.personId(), new HashSet<>(Set.of(r)));
-    });
+    Map<Integer, Set<Resume>> personResumesMap = personService.findResumes(persons.stream()
+                    .map(Person::id)
+                    .collect(Collectors.toSet())).stream()
+            .collect(Collectors.groupingBy(Resume::personId, Collectors.toSet()));
 
     return persons.stream()
         .map(p -> new PersonWithResumes(p, personResumesMap.getOrDefault(p.id(), Collections.emptySet())))
@@ -39,15 +33,7 @@ public class Task8 {
   }
 }
 /*
-Не знаю, возможно какое-то костыльное решение. Не придумал, как можно проще.
-Методом тыка выяснил, что обработка вызовов всех методов, которые лежат в пакете common,
-происходит вручную. То есть никакой прописанной логики нет. Поэтому не получится написать
-personService.findResumes(set.of(person.id))), чтобы получить множество резюме конкретной персоны.
-А так задача решалась бы в одну строчку. Короче, получаю множество всех резюме всех персон,
-преобразуя коллекцию персон в множество их id через map. Потом создаю словарь id персоны/список его резюме.
-Прохожусь по полученному ранее множеству, смотрю на id персоны-владельца резюме.
-Если я уже добавлял для него резюме в словарь, то просто к соответствующему множеству добавляю это резюме,
-иначе создаю новое множество из этого резюме. Потом через map превращаю коллекцию персон в множество объектов
-персона + множество её резюме. Использую getOrDefault, чтобы получить не null, а пустое множество
-в случае, если персоны нет в словаре.
+Получил множество всех резюме, передав полученное через стримы множество всех id персон.
+Потом при помощи groupingBy получил словарь "id персоны / множество его резюме".
+По этому словарю через map преобразовал стрим персон в стрим необходимых объектов и собрал в множество.
  */
