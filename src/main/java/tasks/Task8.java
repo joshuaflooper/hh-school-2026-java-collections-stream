@@ -4,8 +4,9 @@ import common.Person;
 import common.PersonService;
 import common.PersonWithResumes;
 import common.Resume;
-import java.util.Collection;
-import java.util.Set;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /*
   Еще один вариант задачи обогащения
@@ -21,7 +22,18 @@ public class Task8 {
   }
 
   public Set<PersonWithResumes> enrichPersonsWithResumes(Collection<Person> persons) {
-    Set<Resume> resumes = personService.findResumes(Set.of());
-    return Set.of();
+    Map<Integer, Set<Resume>> personResumesMap = personService.findResumes(persons.stream()
+                    .map(Person::id)
+                    .collect(Collectors.toSet())).stream()
+            .collect(Collectors.groupingBy(Resume::personId, Collectors.toSet()));
+
+    return persons.stream()
+        .map(p -> new PersonWithResumes(p, personResumesMap.getOrDefault(p.id(), Collections.emptySet())))
+        .collect(Collectors.toSet());
   }
 }
+/*
+Получил множество всех резюме, передав полученное через стримы множество всех id персон.
+Потом при помощи groupingBy получил словарь "id персоны / множество его резюме".
+По этому словарю через map преобразовал стрим персон в стрим необходимых объектов и собрал в множество.
+ */

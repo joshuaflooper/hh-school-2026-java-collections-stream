@@ -3,8 +3,8 @@ package tasks;
 import common.ApiPersonDto;
 import common.Person;
 import common.PersonConverter;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*
 Задача 4
@@ -22,6 +22,13 @@ public class Task4 {
   }
 
   public List<ApiPersonDto> convert(List<Person> persons) {
-    return new ArrayList<>();
+    return persons.stream()
+        .map(personConverter::convert)
+        .collect(Collectors.toList());
   }
 }
+/*
+Делаю map функции конвертирования для стрима.
+Для стрима по сути не важно, объекты какого типа в нём лежат (я так понял).
+Поэтому все Person без проблем превратились в ApiPersonDto. Потом просто собрал стрим в список.
+ */
